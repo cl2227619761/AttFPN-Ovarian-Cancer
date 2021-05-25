@@ -40,16 +40,13 @@ def get_transform(train):
         return transforms.Compose(transform_list)
     else:
         transform_list = [
-            # T.ImgAugTransform(),  # 别的方法不增强
+            T.ImgAugTransform(),
             T.ToTensor(),
             T.Normalize() 
         ]
         return T.Compose(transform_list)
   
 # def get_transform(train):
-#     """
-#     数据增强操作
-#     """
 #     transforms_list = []
 #     transforms_list.append(T.ToTensor())
 #     if train:
@@ -60,101 +57,101 @@ def get_transform(train):
 
 
 def parse_args(args):
-    parser = argparse.ArgumentParser(description="TCT目标检测")
+    parser = argparse.ArgumentParser(description="TCT object detection")
     subparsers = parser.add_subparsers(
-        help="使用的优化器类型",
+        help="optimizer type",
         dest="optimizer_type"
     )
     subparsers.required = True
 
     parser.add_argument("--model_name",
-                        help="所使用的backbone网络",
+                        help="backbone",
                         type=str,
                         default="resnet50")
     parser.add_argument("--pretrained",
-                        help="backbone网络是否使用预训练权重",
+                        help="whether use pretrained weight",
                         type=bool,
                         default=True)
     parser.add_argument("--device",
-                        help="使用cuda还是cpu",
+                        help="cuda or cpu",
                         type=str,
                         default="cuda:0")
     parser.add_argument("--seed",
-                        help="训练使用的种子数",
+                        help="seed",
                         type=int,
                         default=7)
     parser.add_argument("--root",
-                        help="图像所在的根目录",
+                        help="image root dir",
                         type=str,
                         default="/home/stat-caolei/code/FasterDetection/data/VOC2007_/")
     parser.add_argument("--train_batch_size",
-                        help="训练集的batch size",
+                        help="train batch size",
                         type=int,
                         default=2)
     parser.add_argument("--val_batch_size",
-                        help="验证集的batch_size",
+                        help="val batch_size",
                         type=int,
                         default=1)
     parser.add_argument("--test_batch_size",
-                        help="测试集的batch_size",
+                        help="test batch_size",
                         type=int,
                         default=1)
     parser.add_argument("--num_workers",
-                        help="训练时的线程数",
+                        help="number of workers",
                         type=int,
                         default=12)
     parser.add_argument("--log_dir",
-                        help="tensorboard生成的log存储路径",
+                        help="tensorboard log dir",
                         type=str,
                         default="./logs")
     sgd_parser = subparsers.add_parser("SGD")
     sgd_parser.add_argument("--sgd_lr",
-                            help="SGD的学习率",
+                            help="SGD learning rate",
                             type=float,
                             default=0.005)
     sgd_parser.add_argument("--momentum",
-                            help="SGD的momentum",
+                            help="SGD momentum",
                             type=float,
                             default=0.9)
     sgd_parser.add_argument("--weight_decay",
-                            help="SGD的权值衰减",
+                            help="SGD weight decay",
                             type=float,
                             default=5e-4)
     adam_parser = subparsers.add_parser("Adam")
     adam_parser.add_argument("--adam_lr",
-                             help="Adam的学习率",
+                             help="Adam learning rate",
                              type=float,
                              default=0.01)
     parser.add_argument("--step_size",
-                        help="StepLR的学习率衰减步数",
+                        help="StepLR",
                         type=int,
                         default=8)
     parser.add_argument("--gamma",
-                        help="StepLR学习率衰减时的gamma值",
+                        help="StepLR gamma",
                         type=float,
                         default=0.1)
     parser.add_argument("--num_epochs",
-                        help="迭代的Epoch次数",
+                        help="number of Epoch",
                         type=int,
                         default=26)
     parser.add_argument("--save_model_path",
-                       help="模型的存储位置",
+                       help="model saving dir",
                        type=str,
                        default="./results/saved_models/resnet50.pth")
     parser.add_argument("--record_iter",
-                       help="每隔多少次写入一次损失",
+                       help="record step",
                        type=int,
                        default=10)
     parser.add_argument("--voc_results_dir",
-                        help="预测框文件存储的位置",
+                        help="pred boxes dir",
                         type=str,
                         default="/home/stat-caolei/code/Final_TCT_Detection/tmp/detection_results/")
     parser.add_argument("--pretrained_resnet50_coco",
-                        help="是否使用resnet50在coco上的预训练权重",
+                        help="whether use resnet50 coco pretrained weight",
                         type=bool,
                         default=False)
     parser.add_argument("--ReduceLROnPlateau",
-                        help="使用动态衰减lr的方式",
+                        help="lr decay method",
                         type=bool,
                         default=False)
     
@@ -195,9 +192,8 @@ def main(args=None):
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed(args.seed)
 
-    # 加载数据
+    # load data
     print("====Loading data====")
-    #下面是原始的
     # dataset = get_dataset("./statistic_description/tmp/train.csv",
     #                       datatype="train",
     #                       transform=get_transform(train=True))
@@ -207,7 +203,6 @@ def main(args=None):
     # dataset_test = get_dataset("./statistic_description/tmp/test.csv",
     #                            datatype="test",
     #                            transform=get_transform(train=False))
-    #下面是修稿的
     dataset = get_dataset("./statistic_description/tmp/xiugao_train.csv",
                           datatype="train",
                           transform=get_transform(train=True))
@@ -294,12 +289,12 @@ def main(args=None):
             # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
             #     optimizer, milestones=[8, 24], gamma=args.gamma
             # )
-            # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
-            #     optimizer, milestones=[10, 30], gamma=args.gamma
-            # )
             lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
-                optimizer, milestones=[50, 60], gamma=args.gamma
+                optimizer, milestones=[10, 30], gamma=args.gamma
             )
+            # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
+            #     optimizer, milestones=[50, 60], gamma=args.gamma
+            # )
 
     elif args.optimizer_type == "Adam":
         optimizer = torch.optim.Adam(params, lr=args.adam_lr)
