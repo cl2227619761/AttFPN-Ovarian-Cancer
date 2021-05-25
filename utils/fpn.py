@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # coding=utf-8
-"""
-这是特征金字塔模块
-"""
 import torch
 import torch.nn as nn
 from torch import Tensor
@@ -41,12 +38,6 @@ class AttFeaturePyramidNetwork(nn.Module):
 
     def get_result_from_inner_blocks(self, x, idx):
         # type: (Tensor, int) """
-        """
-        对C2,C3,C4,C5中的每个分别进行1x1conv
-        参数:
-            x:{C2:tensor, C3:tensor, C4:tensor, C5:tensor}
-            idx:索引
-        """
         num_blocks = 0
         for m in self.inner_blocks:
             num_blocks += 1
@@ -62,9 +53,6 @@ class AttFeaturePyramidNetwork(nn.Module):
 
     def get_result_from_csa_blocks(self, x, y, idx):
         # type: (Tensor, int)
-        """
-        执行3x3conv得到P2,P3,P4,P5，做法同上
-        """
         num_blocks = 0
         for m in self.csablocks:
             num_blocks += 1
@@ -101,13 +89,6 @@ class AttFeaturePyramidNetwork(nn.Module):
 
 
 class FeaturePyramidNetwork(nn.Module):
-    """
-    特征金字塔模块
-    参数:
-        in_channels_list: 列表，[C2,C3,C4,C5]输入通道数列表
-        out_channel: 经过FPN之后每个水平的输出通道数，都相同
-        extra_block: 在P5基础上进行的计算得到P6
-    """
 
     def __init__(self, in_channels_list, out_channel, extra_block=None):
         super(FeaturePyramidNetwork, self).__init__()
@@ -136,12 +117,6 @@ class FeaturePyramidNetwork(nn.Module):
 
     def get_result_from_inner_blocks(self, x, idx):
         # type: (Tensor, int) """
-        """
-        对C2,C3,C4,C5中的每个分别进行1x1conv
-        参数:
-            x:{C2:tensor, C3:tensor, C4:tensor, C5:tensor}
-            idx:索引
-        """
         num_blocks = 0
         for m in self.inner_blocks:
             num_blocks += 1
@@ -157,9 +132,6 @@ class FeaturePyramidNetwork(nn.Module):
 
     def get_result_from_layer_blocks(self, x, idx):
         # type: (Tensor, int)
-        """
-        执行3x3conv得到P2,P3,P4,P5，做法同上
-        """
         num_blocks = 0
         for m in self.layer_blocks:
             num_blocks += 1
@@ -175,15 +147,9 @@ class FeaturePyramidNetwork(nn.Module):
 
     def forward(self, x):
         # type: (Dict[str, Tensor])
-        """
-        对FPN模块进行组装
-        参数:
-            x: {C2:tensor, C3:tensor, C4:tensor, C5:tensor}
-        """
         names = list(x.keys())
         x = list(x.values())
         result = []
-        # 先把最顶层的C5计算出来，因为它没有+的过程
         last_inner = self.get_result_from_inner_blocks(x[-1], -1)
         last_layer = self.get_result_from_layer_blocks(last_inner, -1)
         result.append(last_layer)
@@ -202,9 +168,6 @@ class FeaturePyramidNetwork(nn.Module):
 
 
 class MaxpoolOnP5(nn.Module):
-    """
-    在P5的基础上进行简单的下采样，得到P6
-    """
     
     def forward(self, result, name):
         # type: (List[str], List[Tensor])
@@ -215,14 +178,6 @@ class MaxpoolOnP5(nn.Module):
 
 
 class Bottom_up_path(nn.Module):
-    """
-    作用:
-        将FPN融合后的特征进行自下而上的传递
-    参数:
-        in_channels_list: 输入的通道数，其实就是[256,256,256,256],
-        分别对应P2,P3,P4,P5的通道数
-        out_channel: 输出通道数，其实也是256
-    """
     
     def __init__(self, in_channels_list, out_channel, extra_block=None):
         super(Bottom_up_path, self).__init__()
@@ -276,17 +231,9 @@ class Bottom_up_path(nn.Module):
         return out
 
     def forward(self, x):
-        """
-        前向传播过程
-        参数:
-            x: FPN的输出结果，{P2: Tensor, P3: Tensor, P4: Tensor, P5: Tensor}
-        输出:
-            out：{N2: Tensor, N3: Tensor, N4: Tensor, N5: Tensor, N6: Tensor}
-        """
         names = list(x.keys())
         x = list(x.values())
-        result = []  # 用来存储N系列特征
-        # 从P2开始，P2不经过任何处理，直接被作为N2
+        result = []
         N2 = x[0]
         result.append(N2)
         pre_N3 = x[1] + self.get_result_from_inner_blocks(N2, 0)
@@ -307,10 +254,6 @@ class Bottom_up_path(nn.Module):
 
 
 class ConvGnRelu(nn.Module):
-    """
-    作用:
-        FPA模块中所使用的3中不同的卷积层，用于提取不同尺度的信息
-    """
 
     def __init__(self, in_channel, out_channel, kernel_size=3,
                  stride=1, padding=0):
@@ -332,10 +275,6 @@ class ConvGnRelu(nn.Module):
 
 
 class FPAModule(nn.Module):
-    """
-    作用：
-        搭建FPA模块
-    """
 
     def __init__(self, in_channel, out_channel):
         super(FPAModule, self).__init__()
@@ -404,9 +343,6 @@ class FPAModule(nn.Module):
 
 
 class GAUModule(nn.Module):
-    """
-    作用：构建GAU模块
-    """
 
     def __init__(self, in_channel, out_channel):
         super(GAUModule, self).__init__()
@@ -442,10 +378,6 @@ class GAUModule(nn.Module):
 
 
 class PANModule(nn.Module):
-    """
-    作用：
-        将FPA模块和GAU模块组合起来，形成整体
-    """
 
     def __init__(self, in_channels_list, out_channel):
         super(PANModule, self).__init__()
