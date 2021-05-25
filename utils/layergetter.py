@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # coding=utf-8
-"""
-获取特征提取网络的中间层特征
-"""
 import torch.nn as nn
 from torch.jit.annotations import Dict
 
@@ -10,25 +7,13 @@ from collections import OrderedDict
 
 
 class IntermediateLayerGetter(nn.ModuleDict):
-    """
-    作用:
-        提取模型的中间层特征
-    参数:
-        model: 卷积神经网络模型
-        return_layers: 字典，键为要提取的模块的名称；值为提取到的特征
-               新名字
-    返回:
-        有序字典: 键为新名字；值为提取到的特征张量
-    """
     _version = 2
     __annotations__ = {
         "return_layers": Dict[str, str]
     }
 
     def __init__(self, model, return_layers):
-        # 用来得到新名字
         ori_return_layers = return_layers.copy()
-        # 把要提取的模块存进字典里，构建ModuleDict使用
         layers = OrderedDict()
         for name, module in model.named_children():
             layers[name] = module
@@ -37,7 +22,6 @@ class IntermediateLayerGetter(nn.ModuleDict):
             if not return_layers:
                 break
 
-        # 继承ModuleDict的时候，提供layers字典作为模块
         super(IntermediateLayerGetter, self).__init__(layers)
         self.return_layers = ori_return_layers
 
@@ -52,9 +36,6 @@ class IntermediateLayerGetter(nn.ModuleDict):
 
 
 class DenseNetLayerGetter(nn.Module):
-    """
-    DenseNe中间层获取
-    """
     def __init__(self, model):
         super(DenseNetLayerGetter, self).__init__()
         self.model = model
