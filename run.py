@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 """
-本脚本是运行脚本
+run script
 """
 import torch
 from torch.utils.tensorboard import SummaryWriter
