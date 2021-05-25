@@ -1,0 +1,4 @@
+Code for paper A novel attention guided convolutional neural network for abnormal cervical cell detection in cervical
+cancer screening
+==========================================
+modify the settings in code according to your own task, and then run ./launch.sh
