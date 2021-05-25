@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 """
-本脚本是Faster R-CNN模块的组装
+Faster R-CNN
 """
 import torch
 import torch.nn as nn
@@ -17,16 +17,10 @@ from utils.transform import GeneralizedRCNNTransform
 
 
 class FasterRCNN(GeneralizedRCNN):
-    """
-    作用:
-        组装最终的FasterRCNN模块
-    """
 
     def __init__(self, backbone, num_classes=None,
-                 # transform参数
                  min_size=800, max_size=1333,
                  image_mean=None, image_std=None,
-                 # RPN参数
                  rpn_anchor_generator=None, rpn_head=None,
                  rpn_pre_nms_top_n_train=2000,
                  rpn_pre_nms_top_n_test=1000,
@@ -36,7 +30,6 @@ class FasterRCNN(GeneralizedRCNN):
                  rpn_fg_iou_thresh=0.7, rpn_bg_iou_thresh=0.3,
                  rpn_batch_size_per_img=256,
                  rpn_positive_fraction=0.5,
-                 # RoIHead参数
                  box_roi_pool=None,
                  box_head=None,
                  box_predictor=None,
@@ -50,7 +43,6 @@ class FasterRCNN(GeneralizedRCNN):
                  bbox_reg_weights=None):
         
         if not hasattr(backbone, "out_channels"):
-            # backbone要有out_channels属性，后面要用
             raise ValueError("backbone should have the out_channels attr")
 
         assert isinstance(rpn_anchor_generator, (AnchorGenerator, type(None)))
@@ -60,14 +52,11 @@ class FasterRCNN(GeneralizedRCNN):
         out_channels = backbone.out_channels
 
         if rpn_anchor_generator is None:
-            #用的这个
             anchor_sizes = ((32,),(64,),(128,),(256,),(512,))
             # anchor_sizes = ((32,64,128),(32,64,128),(64,128,256),(64,128,256),(128,256,512))
-            #用的这个
             aspect_ratios = ((0.5, 1.0, 2.0),) * len(anchor_sizes)
             # anchor_sizes = ((64,),(128,),(192,),(256,),(320,))
             # aspect_ratios = ((0.5, 1.0, 4.0),(0.5, 1.0, 3.5),(0.5, 1.0, 5.0),(0.5, 1.0, 3.0),(0.5, 1.0, 4.0))
-            # 单一水平实验
             # anchor_sizes = ((128, 256, 512),)
             # aspect_ratios = ((0.5, 1.0, 2.0),)
             rpn_anchor_generator = AnchorGenerator(anchor_sizes,
@@ -154,14 +143,6 @@ class FasterRCNN(GeneralizedRCNN):
 
 
 class TwoMLHead(nn.Module):
-    """
-    作用:
-        RoIAlign以后得到的box_feature需要经过该模块
-        这是一个两层全连接神经网络
-    参数:
-        in_channels: 输入的神经元数
-        representation_size
-    """
     
     def __init__(self, in_channels, representation_size):
         super(TwoMLHead, self).__init__()
@@ -208,19 +189,11 @@ class NewTwoMLHead(nn.Module):
 
 
 class FastRCNNPredictor(nn.Module):
-    """
-    作用:
-        最终的分类头和回归头
-    返回:
-        scores: 类别logits值
-        bbox_deltas: 预测框偏移量
-    """
 
     def __init__(self, in_channels, num_classes):
         super(FastRCNNPredictor, self).__init__()
         self.cls_score = nn.Linear(in_channels, num_classes)
         self.bbox_pred = nn.Linear(in_channels, num_classes*4)
-        # 新加的初始化方式，配合focalloss
         # nn.init.normal_(self.cls_score.weight, 0., 0.01)
         # nn.init.constant_(self.cls_score.bias, -2.0)
 
