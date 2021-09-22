@@ -258,8 +258,8 @@ class RegionProposalNetwork(nn.Module):
         for anchors_per_img, targets_per_img in zip(anchors, targets):
             gt_boxes = targets_per_img["boxes"]
 
+            device = anchors_per_img.device
             if gt_boxes.numel() == 0:
-                device = anchors_per_img.device
                 matched_gt_boxes_per_img = torch.zeros(
                     anchors_per_img.shape, dtype=torch.float32,
                     device=device
@@ -277,9 +277,9 @@ class RegionProposalNetwork(nn.Module):
                 labels_per_img = matched_idxs >= 0
                 labels_per_img = labels_per_img.to(dtype=torch.float32)
                 bg_indices = matched_idxs == self.proposal_matcher.BELOW_LOW_THRESHOLD
-                labels_per_img[bg_indices] = torch.tensor(0.0)
+                labels_per_img[bg_indices] = torch.tensor(0.0).to(device)
                 indices_to_discard = matched_idxs == self.proposal_matcher.BETWEEN_THRESHOLDS
-                labels_per_img[indices_to_discard] = torch.tensor(-1.0)
+                labels_per_img[indices_to_discard] = torch.tensor(-1.0).to(device)
 
             labels.append(labels_per_img)
             matched_gt_boxes.append(matched_gt_boxes_per_img)

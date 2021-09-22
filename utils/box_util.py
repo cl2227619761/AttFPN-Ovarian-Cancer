@@ -53,10 +53,10 @@ class BalancedPositiveNegativeSampler(object):
             )
 
             pos_idx_per_img_mask[pos_idx_per_img] = torch.tensor(
-                1, dtype=torch.uint8
+                1, dtype=torch.uint8, device=matched_idxs_per_img.device
             )
             neg_idx_per_img_mask[neg_idx_per_img] = torch.tensor(
-                1, dtype=torch.uint8
+                1, dtype=torch.uint8, device=matched_idxs_per_img.device
             )
 
             pos_idx.append(pos_idx_per_img_mask)
@@ -122,8 +122,8 @@ class BoxCoder(object):
         dtype = reference_boxes.dtype
         device = reference_boxes.device
         weights = torch.as_tensor(self.weights, dtype=dtype, device=device)
-        targets = encode_boxes(reference_boxes, proposals, weights)
-        return targets
+        targets = encode_boxes(reference_boxes.cpu(), proposals.cpu(), weights.cpu())
+        return targets.to(device)
 
     def decode(self, rel_codes, boxes):
         # type: (Tensor, List[Tensor])
@@ -214,8 +214,9 @@ class Matcher(object):
         between_thresholds = (matched_vals >= self.low_threshold) & (
             matched_vals < self.high_threshold
         )
-        matches[below_low_threshold] = torch.tensor(self.BELOW_LOW_THRESHOLD)
-        matches[between_thresholds] = torch.tensor(self.BETWEEN_THRESHOLDS)
+        device = match_quality_matrix.device
+        matches[below_low_threshold] = torch.tensor(self.BELOW_LOW_THRESHOLD).to(device)
+        matches[between_thresholds] = torch.tensor(self.BETWEEN_THRESHOLDS).to(device)
 
         if self.allow_low_quality_matches:
             assert all_matches is not None
