@@ -92,8 +92,8 @@ class RoIHeads(nn.Module):
         for proposals_in_img, gt_boxes_in_img, gt_labels_in_img in zip(
             proposals, gt_boxes, gt_labels
         ):
+            device = proposals_in_img.device
             if gt_boxes_in_img.numel() == 0:
-                device = proposals_in_img.device
                 clamped_matched_idxs_in_img = torch.zeros(
                     (proposals_in_img.shape[0],), dtype=torch.int64,
                     device=device
@@ -113,9 +113,9 @@ class RoIHeads(nn.Module):
                 labels_in_img = gt_labels_in_img[clamped_matched_idxs_in_img]
                 labels_in_img = labels_in_img.to(dtype=torch.int64)
                 bg_indices = matched_idxs_in_img == self.proposal_matcher.BELOW_LOW_THRESHOLD
-                labels_in_img[bg_indices] = torch.tensor(0)
+                labels_in_img[bg_indices] = torch.tensor(0).to(device)
                 ignore_indices = matched_idxs_in_img == self.proposal_matcher.BETWEEN_THRESHOLDS
-                labels_in_img[ignore_indices] = torch.tensor(-1)
+                labels_in_img[ignore_indices] = torch.tensor(-1).to(device)
 
             matched_idxs.append(clamped_matched_idxs_in_img)
             labels.append(labels_in_img)
